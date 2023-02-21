@@ -3,9 +3,9 @@
 - [x] Cadastro de usuário;
 - [x] Cadastro de tarefa;
 - [x] Lista de tarefas;
-- [ ] Atualização total de tarefa;
-- [ ] Atualização parcial de tarefa;
-- [ ] Deletar tarefa;
+- [x] Atualização total de tarefa;
+- [x] Atualização parcial de tarefa;
+- [x] Deletar tarefa;
 
 ## Autor
 
