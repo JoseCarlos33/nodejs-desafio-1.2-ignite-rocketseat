@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 const users = [];
-console.log(users)
+
 function checksExistsUserAccount(request, response, next) {
   const { username } = request.headers;
 
@@ -21,6 +21,25 @@ function checksExistsUserAccount(request, response, next) {
 
   if(!user){
     return response.status(400).json({ error: "User not found" });
+  }
+
+  next();
+}
+
+function checksExistsTodoById(request, response, next) {
+  const { id } = request.params;
+  const { username } = request.headers;
+
+  if(!username){
+    return response.status(400).json({ error: "Properties username is obrigatory" });
+  }
+  
+  const existTodo = users[users.findIndex((user) => user.username === username)]
+  ?.todos
+  ?.some((todo) => todo.id === id);
+
+  if(!existTodo){
+    return response.status(404).json({ error: "Todo not found" });
   }
 
   next();
@@ -86,7 +105,7 @@ app.post('/todos', checksExistsUserAccount, (request, response) => {
   
 });
 
-app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
+app.put('/todos/:id', checksExistsUserAccount, checksExistsTodoById, (request, response) => {
   const { id } = request.params;
   const { title, deadline } = request.body;
   const { username } = request.headers;
@@ -94,8 +113,6 @@ app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
   if(!title || !deadline){
     return response.status(400).json({ error: "Properties title and deadline are obrigatory" });
   }
-
-  let todoFormatted = null;
 
   users[users.findIndex((user) => user.username === username)]
   ?.todos
@@ -106,21 +123,15 @@ app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
       todoFormatted = todo;
     }
     return todo;
-  })
-
-  if(!todoFormatted){
-    return response.status(404).json({ error: "Todo not found" });
-  }
+  });
 
   return response.status(201).json(todoFormatted);
 });
 
-app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
+app.patch('/todos/:id/done', checksExistsUserAccount, checksExistsTodoById, (request, response) => {
   const { id } = request.params;
   const { username } = request.headers;
-
-  let todoFormatted = null;
-
+  
   users[users.findIndex((user) => user.username === username)]
   ?.todos
   ?.map((todo) => {
@@ -130,16 +141,25 @@ app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
     }
     return todo;
   })
-
-  if(!todoFormatted){
-    return response.status(404).json({ error: "Todo not found" });
-  }
   
   return response.status(201).json(todoFormatted);
 });
 
-app.delete('/todos/:id', checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+app.delete('/todos/:id', checksExistsUserAccount, checksExistsTodoById, (request, response) => {
+  const { id } = request.params;
+  const { username } = request.headers;
+  const currentUser = users[users.findIndex((user) => user.username === username)];
+
+  const todosWithoutTodoWithId = currentUser
+  ?.todos
+  ?.filter((todo) => todo.id !== id);
+
+  users[users.findIndex((user) => user.username === username)] = {
+    ...currentUser,
+    todos: todosWithoutTodoWithId
+  };
+  
+  return response.status(204).json(todoFormatted);
 });
 
 module.exports = app;
